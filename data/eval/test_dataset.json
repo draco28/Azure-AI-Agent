@@ -1,0 +1,162 @@
+[
+  {
+    "id": "eval_01",
+    "query": "How many days can employees work remotely and at what intervals are performance reviews conducted?",
+    "expected_tool": "rag_tool",
+    "expected_sources": ["employee_handbook.txt"],
+    "expected_answer_contains": ["3 days per week", "manager approval", "twice per year", "June", "December"],
+    "category": "cross_chunk",
+    "reference": "Employees may work remotely up to 3 days per week with manager approval. Performance reviews are conducted twice per year in June and December."
+  },
+  {
+    "id": "eval_02",
+    "query": "What is the company's policy on remote work?",
+    "expected_tool": "rag_tool",
+    "expected_sources": ["employee_handbook.txt"],
+    "expected_answer_contains": ["3 days per week", "manager approval"],
+    "category": "simple_retrieval",
+    "reference": "Employees may work remotely up to 3 days per week with manager approval. A dedicated workspace with reliable internet (minimum 25 Mbps) is required. The company provides a one-time $500 stipend for home office setup."
+  },
+  {
+    "id": "eval_03",
+    "query": "What are the password requirements?",
+    "expected_tool": "rag_tool",
+    "expected_sources": ["it_security_policy.md"],
+    "expected_answer_contains": ["12 characters", "90 days", "MFA", "5 consecutive failed"],
+    "category": "precision",
+    "reference": "Passwords must be minimum 12 characters with uppercase, lowercase, numbers, and special characters. Passwords expire every 90 days. MFA is required for all employees. Accounts lock after 5 consecutive failed login attempts."
+  },
+  {
+    "id": "eval_04",
+    "query": "What is the expense reimbursement policy?",
+    "expected_tool": "rag_tool",
+    "expected_sources": ["employee_handbook.txt"],
+    "expected_answer_contains": ["30 days", "$25"],
+    "category": "simple_retrieval",
+    "reference": "Business expenses must be submitted within 30 days of incurrence. Receipts are required for all expenses over $25. Pre-approved limits include meals during business travel at $75 per day, client entertainment at $200 per event with manager approval, and professional development at $2,000 per year per employee."
+  },
+  {
+    "id": "eval_05",
+    "query": "What was the Q4 2024 total revenue and how did it compare to Q3?",
+    "expected_tool": "rag_tool",
+    "expected_sources": ["quarterly_report_q4_2024.md"],
+    "expected_answer_contains": ["$48.7M", "$43.5M", "12%"],
+    "category": "simple_retrieval",
+    "reference": "Q4 2024 total revenue was $48.7M, up 12% from Q3 2024 revenue of $43.5M."
+  },
+  {
+    "id": "eval_06",
+    "query": "What file types does DataSync support and what is the maximum file size?",
+    "expected_tool": "rag_tool",
+    "expected_sources": ["product_faq.txt"],
+    "expected_answer_contains": ["PDF", "DOCX", "5 GB"],
+    "category": "simple_retrieval",
+    "reference": "DataSync supports PDF, DOCX, XLSX, PPTX, TXT, CSV, JSON, and XML file types. The maximum file size is 5 GB per file."
+  },
+  {
+    "id": "eval_07",
+    "query": "What is the status of the Q4 report?",
+    "expected_tool": "file_status_tool",
+    "expected_sources": [],
+    "expected_answer_contains": ["approved", "Sarah Chen", "Finance"],
+    "category": "routing",
+    "reference": "The Q4 report (quarterly_report_q4_2024.md) has been approved. It was submitted by Sarah Chen from the Finance department."
+  },
+  {
+    "id": "eval_08",
+    "query": "Which files are currently pending?",
+    "expected_tool": "file_status_tool",
+    "expected_sources": [],
+    "expected_answer_contains": ["product_faq.txt", "pending", "Emily Rodriguez"],
+    "category": "routing",
+    "reference": "The file product_faq.txt is currently pending. It was submitted by Emily Rodriguez from the Product department."
+  },
+  {
+    "id": "eval_09",
+    "query": "Is the Q4 report approved? What was the total revenue?",
+    "expected_tool": "both",
+    "expected_sources": ["quarterly_report_q4_2024.md"],
+    "expected_answer_contains": ["approved", "Sarah Chen", "$48.7M"],
+    "category": "multi_tool",
+    "reference": "Yes, the Q4 report is approved. It was submitted by Sarah Chen from Finance. The Q4 2024 total revenue was $48.7M."
+  },
+  {
+    "id": "eval_10",
+    "query": "What is the status of the engineering onboarding guide and what does it say about first-week expectations?",
+    "expected_tool": "both",
+    "expected_sources": [],
+    "expected_answer_contains": ["processing", "Dr. Sarah Zhang"],
+    "category": "multi_tool",
+    "reference": "The engineering onboarding guide (engineering_onboarding_guide.md) is currently processing. It was submitted by Dr. Sarah Zhang from the Engineering department."
+  },
+  {
+    "id": "eval_11",
+    "query": "Thank you for the help!",
+    "expected_tool": "none",
+    "expected_sources": [],
+    "expected_answer_contains": [],
+    "category": "no_tool"
+  },
+  {
+    "id": "eval_12",
+    "query": "What is the company's policy on stock options?",
+    "expected_tool": "rag_tool",
+    "expected_sources": [],
+    "expected_answer_contains": [],
+    "category": "negative"
+  },
+  {
+    "id": "eval_13",
+    "query": "How does DataSync handle permissions and what integrations are available?",
+    "expected_tool": "rag_tool",
+    "expected_sources": ["product_faq.txt"],
+    "expected_answer_contains": ["RBAC", "Owner", "Admin", "Editor", "Viewer", "Slack", "Jira"],
+    "category": "cross_chunk",
+    "reference": "DataSync uses Role-Based Access Control (RBAC) with four permission levels: Owner, Admin, Editor, and Viewer. Available integrations include Slack, Jira, Microsoft Teams, Google Workspace, and Zapier."
+  },
+  {
+    "id": "eval_14",
+    "query": "What should I do if I suspect a security incident?",
+    "expected_tool": "rag_tool",
+    "expected_sources": ["it_security_policy.md"],
+    "expected_answer_contains": ["SOC", "soc@techcorp.com", "15 minutes", "do not delete"],
+    "category": "simple_retrieval",
+    "reference": "Report suspected security incidents to the Security Operations Center (SOC) at soc@techcorp.com within 15 minutes. Do not delete any evidence or logs related to the incident."
+  },
+  {
+    "id": "eval_15",
+    "query": "Which files were rejected and who submitted them?",
+    "expected_tool": "file_status_tool",
+    "expected_sources": [],
+    "expected_answer_contains": ["q1_2025_budget_proposal.pdf", "rejected", "Michael Tanaka"],
+    "category": "routing",
+    "reference": "The file q1_2025_budget_proposal.pdf was rejected. It was submitted by Michael Tanaka from the Finance department."
+  },
+  {
+    "id": "eval_16",
+    "query": "What is the uptime SLA for DataSync Enterprise?",
+    "expected_tool": "rag_tool",
+    "expected_sources": ["product_faq.txt"],
+    "expected_answer_contains": ["99.95%"],
+    "category": "simple_retrieval",
+    "reference": "DataSync Enterprise plan guarantees 99.95% uptime SLA."
+  },
+  {
+    "id": "eval_17",
+    "query": "How many new enterprise customers were signed in Q4 and what was the largest contract?",
+    "expected_tool": "rag_tool",
+    "expected_sources": ["quarterly_report_q4_2024.md"],
+    "expected_answer_contains": ["Meridian Healthcare", "$420K", "3"],
+    "category": "cross_chunk",
+    "reference": "3 new enterprise customers were signed in Q4 2024. The largest contract was with Meridian Healthcare at $420K annual value."
+  },
+  {
+    "id": "eval_18",
+    "query": "Can personal devices access source code repositories?",
+    "expected_tool": "rag_tool",
+    "expected_sources": ["it_security_policy.md"],
+    "expected_answer_contains": ["NOT permitted", "BYOD"],
+    "category": "precision",
+    "reference": "Personal devices are NOT permitted to access source code repositories under the BYOD policy."
+  }
+]
