@@ -1,6 +1,11 @@
+import logging
+import time
+
 from src.agent.state import AgentState
 
-from langchain_core.messages import SystemMessage
+from langchain_core.messages import AIMessage, SystemMessage
+
+logger = logging.getLogger(__name__)
 
 def create_agent_node(llm_with_tools):
     system_message = SystemMessage(content="""You are a helpful AI assistant with access to specialized tools for document-related queries.
@@ -25,9 +30,41 @@ Guidelines:
 
 6. Be concise but thorough, clearly distinguishing between content information and status information in your responses.
     """)
-    
+
     def agent_node(state: AgentState) -> dict:
+        start_time = time.perf_counter()
+
+        logger.info(
+            "agent.invoked",
+            extra={
+                "turn_count": len(state["messages"]),
+            },
+        )
+
         response = llm_with_tools.invoke([system_message] + state['messages'])
+
+        latency_ms = round((time.perf_counter() - start_time) * 1000, 2)
+
+        # Check if the LLM decided to call tools
+        if isinstance(response, AIMessage) and response.tool_calls:
+            for tc in response.tool_calls:
+                logger.info(
+                    "agent.tool_selected",
+                    extra={
+                        "tool_name": tc["name"],
+                        "tool_args": tc["args"],
+                        "latency_ms": latency_ms,
+                    },
+                )
+        else:
+            logger.info(
+                "agent.response_generated",
+                extra={
+                    "response_length": len(response.content) if response.content else 0,
+                    "latency_ms": latency_ms,
+                },
+            )
+
         return {"messages": [response]}
-    
+
     return agent_node
