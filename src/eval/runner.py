@@ -1,16 +1,9 @@
 import json
 from typing import Any
 from langchain_core.messages import HumanMessage, AIMessage, ToolMessage
-from langchain_openai import ChatOpenAI
 
 from src.config import get_settings
 from src.agent.setup import setup_agent
-
-from ragas import evaluate
-from ragas.metrics import faithfulness, answer_relevancy, context_recall
-from ragas.dataset_schema import SingleTurnSample
-from ragas import EvaluationDataset
-from ragas.llms import LangchainLLMWrapper
 
 def check_facts(answer: str, expected_facts: list[str]) -> tuple[list[str], list[str]]:
     """Check which expected facts appear in the answer (case-insensitive)."""
@@ -32,7 +25,7 @@ def check_tool_selection(tools_used: list[str], expected_tool: str) -> bool:
     else:
         return expected_tool in tools_used
 
-    
+
 def check_sources(tool_results: str, expected_sources: list[str]) -> bool:
     """ Check if the expected sources were used """
     if expected_sources == []:
@@ -84,7 +77,7 @@ def compute_metrics(results: list[dict[str, Any]]) -> dict[str, Any]:
     for result in results:
         if result["tool_correct"]:
             tool_correct_count += 1
-        
+
         if result["category"] not in ["negative", "no_tool"]:
             scoreable_count += 1
             if result["facts_correct"]:
@@ -101,6 +94,78 @@ def load_test_dataset(path: str = "data/eval/test_dataset.json") -> list[dict[st
     with open(path, "r") as f:
         return json.load(f)
 
+async def run_ragas_evaluation(results: list[dict[str, Any]]) -> dict[str, float] | None:
+    """Run RAGAS LLM-judged evaluation. Returns None if RAGAS is unavailable or fails."""
+    try:
+        from openai import AsyncOpenAI, AsyncAzureOpenAI
+        from ragas.llms import llm_factory
+        from ragas.embeddings import OpenAIEmbeddings as RagasOpenAIEmbeddings
+        from ragas.metrics.collections import Faithfulness, AnswerRelevancy, ContextRecall
+    except ImportError:
+        print("RAGAS not installed, skipping LLM-judged evaluation.")
+        return None
+
+    try:
+        settings = get_settings()
+
+        llm_client = AsyncOpenAI(
+            base_url=settings.glm_base_url,
+            api_key=settings.glm_api_key.get_secret_value(),
+        )
+        ragas_llm = llm_factory(settings.chat_model, provider="openai", client=llm_client, max_tokens=8192)
+
+        embedding_client = AsyncAzureOpenAI(
+            api_key=settings.azure_openai_api_key.get_secret_value(),
+            api_version=settings.azure_openai_api_version,
+            azure_endpoint=settings.azure_openai_endpoint,
+        )
+        ragas_embeddings = RagasOpenAIEmbeddings(
+            client=embedding_client,
+            model=settings.embedding_deployment,
+        )
+
+        faith_metric = Faithfulness(llm=ragas_llm)
+        relevancy_metric = AnswerRelevancy(llm=ragas_llm, embeddings=ragas_embeddings)
+        recall_metric = ContextRecall(llm=ragas_llm)
+
+        faith_samples = []
+        relevancy_samples = []
+        recall_samples = []
+        for result in results:
+            if result["category"] not in ["negative", "no_tool"]:
+                faith_samples.append({
+                    "user_input": result["query"],
+                    "response": result["answer"],
+                    "retrieved_contexts": result["retrieved_contexts"],
+                })
+                relevancy_samples.append({
+                    "user_input": result["query"],
+                    "response": result["answer"],
+                })
+                recall_samples.append({
+                    "user_input": result["query"],
+                    "retrieved_contexts": result["retrieved_contexts"],
+                    "reference": result["reference"],
+                })
+
+        faith_results = []
+        relevancy_results = []
+        recall_results = []
+        for i in range(len(faith_samples)):
+            print(f"  RAGAS scoring sample {i+1}/{len(faith_samples)}...")
+            faith_results.append(await faith_metric.ascore(**faith_samples[i]))
+            relevancy_results.append(await relevancy_metric.ascore(**relevancy_samples[i]))
+            recall_results.append(await recall_metric.ascore(**recall_samples[i]))
+
+        return {
+            "ragas_faithfulness": sum(r.value for r in faith_results) / len(faith_results),
+            "ragas_answer_relevancy": sum(r.value for r in relevancy_results) / len(relevancy_results),
+            "ragas_context_recall": sum(r.value for r in recall_results) / len(recall_results),
+        }
+    except Exception as e:
+        print(f"RAGAS evaluation failed: {e}")
+        return None
+
 async def run_evaluation():
     # 1. Load test dataset
     print("Loading test dataset...")
@@ -115,42 +180,31 @@ async def run_evaluation():
         print(f"Running test case {test_case['id']}...")
         result = await run_single_eval(agent, test_case)
         results.append(result)
-    
-    # 4. Convert results to ragas samples
-    samples = []
-    for result in results:
-        if result["category"] not in ["negative", "no_tool"]:
-            samples.append(SingleTurnSample(
-                user_input=result["query"],
-                response=result["answer"],
-                retrieved_contexts=result["retrieved_contexts"],
-                reference=result["reference"],
-            ))
-    dataset = EvaluationDataset(samples=samples)
-    settings = get_settings()
-    llm_as_judge = LangchainLLMWrapper(ChatOpenAI(
-        base_url=settings.glm_base_url,
-        model=settings.chat_model,
-        api_key=settings.glm_api_key.get_secret_value()
-    ))
-    ragas_results = evaluate(
-        dataset=dataset,
-        llm=llm_as_judge,
-        metrics=[faithfulness, answer_relevancy, context_recall]
-    )
-    # 5. Call compute_metrics on all results
+
+    # 4. Compute manual metrics
     print("Computing metrics...")
     metrics = compute_metrics(results)
     for result in results:
         missing = f" (missing: {result['facts_missing']})" if result['facts_missing'] else ""
-        print(f"{result['id']} | Category: {result['category']} | Tool: {'✓' if result['tool_correct'] else '✗'} | Facts: {'✓' if result['facts_correct'] else '✗'} {missing} | Source: {'✓' if result['source_correct'] else '✗'}")
-    print("\nRAGAS Results:")
-    print(ragas_results)
-    print("\nMetrics:")
-    print(f"Tool Accuracy: {metrics['tool_accuracy']:.2f}")
-    print(f"Faithfulness: {metrics['faithfulness']:.2f}")
-    print(f"Source Accuracy: {metrics['source_accuracy']:.2f}")
-    
+        print(f"{result['id']} | Category: {result['category']} | Tool: {'✓' if result['tool_correct'] else '✗'} | Facts: {'✓' if result['facts_correct'] else '✗'}{missing} | Source: {'✓' if result['source_correct'] else '✗'}")
+
+    print("\nManual Metrics:")
+    print(f"  Tool Accuracy:   {metrics['tool_accuracy']:.2f}")
+    print(f"  Faithfulness:    {metrics['faithfulness']:.2f}")
+    print(f"  Source Accuracy:  {metrics['source_accuracy']:.2f}")
+
+    # 5. Run RAGAS evaluation (optional)
+    print("\nRunning RAGAS evaluation...")
+    ragas_metrics = await run_ragas_evaluation(results)
+    if ragas_metrics:
+        metrics.update(ragas_metrics)
+        print("\nRAGAS Metrics (LLM-judged):")
+        print(f"  Faithfulness:      {ragas_metrics['ragas_faithfulness']:.2f}")
+        print(f"  Answer Relevancy:  {ragas_metrics['ragas_answer_relevancy']:.2f}")
+        print(f"  Context Recall:    {ragas_metrics['ragas_context_recall']:.2f}")
+    else:
+        print("RAGAS evaluation skipped.")
+
     return results, metrics
 
 if __name__ == "__main__":
