@@ -58,3 +58,6 @@ data/documents/
 
 # Local MCP config
 .mcp.json
+
+# Assignment file
+assignment.md
