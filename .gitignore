@@ -1,0 +1,60 @@
+# Environment
+.env
+.env.local
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+.Python
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Build
+dist/
+build/
+*.egg-info/
+
+# Learning state (personal progress)
+.learning-state.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# PostgreSQL local data
+pgdata/
+
+# Vector store data
+data/vector_store/
+
+# Docker
+docker-compose.override.yml
+
+# Chainlit auto-generated
+.chainlit/
+
+# Claude Code
+.claude/
+
+# Uploaded documents (runtime data)
+data/documents/
+
+# Local MCP config
+.mcp.json
