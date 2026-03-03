@@ -1,0 +1,48 @@
+Product FAQ - TechCorp DataSync Platform
+
+Q: What is DataSync?
+A: DataSync is TechCorp's enterprise file synchronization and collaboration platform. It allows teams to share, version, and collaborate on documents in real-time across all devices. Current version is DataSync 4.2, released January 2025.
+
+Q: What file types does DataSync support?
+A: DataSync supports all common file types including documents (PDF, DOCX, XLSX, PPTX), images (PNG, JPG, SVG), code files, and archives (ZIP, TAR). Maximum individual file size is 5 GB. Maximum storage per team is 1 TB on the Standard plan and 5 TB on the Enterprise plan.
+
+Q: How does version control work?
+A: DataSync automatically saves a new version every time a file is modified. You can view up to 180 days of version history on Standard plan and unlimited history on Enterprise plan. To restore a previous version, right-click the file and select "Version History." Deleted files are kept in trash for 30 days before permanent deletion.
+
+Q: Can I access DataSync offline?
+A: Yes. Mark files or folders as "Available Offline" and they will sync to your local device. Changes made offline are automatically synced when you reconnect. Conflict resolution follows a last-write-wins policy with the losing version saved as a separate conflict copy.
+
+Q: How do I share files with external users?
+A: Create a shared link from the file context menu. You can set permissions (view only, comment, edit), add password protection, set expiration dates (maximum 90 days for external shares), and limit downloads. External users do not need a DataSync account. All external shares are logged in the admin audit trail.
+
+Q: What are the system requirements?
+A: Desktop app requires Windows 10+ or macOS 12+. Mobile apps require iOS 15+ or Android 12+. Web access works on Chrome 90+, Firefox 90+, Safari 15+, or Edge 90+. Minimum 2 GB RAM and 500 MB free disk space for the desktop client.
+
+Q: How does DataSync handle permissions?
+A: DataSync uses role-based access control (RBAC) with four roles:
+- Owner: Full control, can delete workspace and manage billing
+- Admin: Can manage members, permissions, and integrations
+- Editor: Can create, edit, and delete files within assigned folders
+- Viewer: Read-only access to assigned folders
+Permissions are inherited from parent folders but can be overridden at any level.
+
+Q: What integrations are available?
+A: DataSync integrates with:
+- Slack (file notifications and preview)
+- Microsoft Teams (tab embedding and file sharing)
+- Jira (attach files to tickets)
+- GitHub (link repositories to project folders)
+- Zapier (custom automation workflows)
+API access is available on Enterprise plan for custom integrations. Rate limit is 1000 API calls per minute per workspace.
+
+Q: What is the uptime SLA?
+A: DataSync guarantees 99.95% uptime on Enterprise plan and 99.9% on Standard plan. Scheduled maintenance windows are Sundays 2-4 AM UTC with 72 hours advance notice. Real-time status is available at status.datasync.techcorp.com.
+
+Q: How is data encrypted?
+A: All data is encrypted at rest using AES-256 and in transit using TLS 1.3. Enterprise customers can use their own encryption keys (BYOK) through Azure Key Vault integration. Encryption keys are rotated every 12 months automatically.
+
+Q: What happens when storage is full?
+A: When a team reaches 90% storage capacity, all Admins and Owners receive email notifications. At 100%, uploads are blocked but existing files remain accessible. To free space, delete unnecessary files, empty trash, or upgrade the plan. Storage usage breakdown is available in the Admin Dashboard under "Storage Analytics."
+
+Q: How do I report a bug or request a feature?
+A: Submit bug reports through the in-app feedback widget (Help > Report Issue) or email support@datasync.techcorp.com. Feature requests can be submitted and voted on at feedback.datasync.techcorp.com. Critical bugs are addressed within 4 hours, high-priority within 24 hours, and normal priority within 5 business days.
