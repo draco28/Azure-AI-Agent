@@ -1,0 +1,32 @@
+name: PR Gate
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  string-evals:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Install dependencies
+        run: uv sync --frozen
+
+      - name: Run string-based evaluations
+        run: uv run pytest tests/eval/ -v -k "not ragas"
+
+  docker-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t azure-ai-agent:pr-${{ github.event.pull_request.number }} .

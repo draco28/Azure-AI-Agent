@@ -12,7 +12,7 @@ and improve diversity in the final results.
 
 import logging
 import time
-from typing import Protocol
+from abc import ABC, abstractmethod
 
 from langchain_core.documents import Document
 from langchain_community.vectorstores import FAISS
@@ -27,19 +27,39 @@ from src.config import get_settings, Settings
 logger = logging.getLogger(__name__)
 
 
-class RetrieverProtocol(Protocol):
-    """Protocol defining the interface for all retriever implementations."""
-    
+class BaseRetriever(ABC):
+    @abstractmethod
     def retrieve(self, query: str, top_k: int = 4) -> list[tuple[Document, float]]:
         """Retrieve relevant documents for a given query."""
         ...
     
+    @traceable
     def format_citation(self, results: list[tuple[Document, float]]) -> str:
-        """Format retrieved documents with citation information."""
-        ...
+        """
+        Format retrieved documents with source citations.
+        
+        Creates a human-readable string with document content and metadata
+        for use in LLM context or display to users.
+        
+        Args:
+            results: List of (Document, score) tuples from retrieval
+            
+        Returns:
+            Formatted string with documents separated by double newlines,
+            each including source file, chunk index, and relevance score
+        """
+        formatted = []
+        for doc, score in results:
+            source = doc.metadata.get("source", "unknown")
+            chunk_index = doc.metadata.get("chunk_index", "N/A")
+            text = doc.page_content
+            formatted.append(
+                f"{text}\n[Source: {source}, chunk {chunk_index}, score {score:.2f}]"
+            )
+        return "\n\n".join(formatted)
 
 
-class HybridRetriever:
+class HybridRetriever(BaseRetriever):
     """
     A hybrid retriever that combines dense and sparse retrieval strategies.
     
@@ -140,33 +160,10 @@ class HybridRetriever:
 
         return reranked_results
 
-    @traceable
-    def format_citation(self, results: list[tuple[Document, float]]) -> str:
-        """
-        Format retrieved documents with source citations.
-        
-        Creates a human-readable string with document content and metadata
-        for use in LLM context or display to users.
-        
-        Args:
-            results: List of (Document, score) tuples from retrieval
-            
-        Returns:
-            Formatted string with documents separated by double newlines,
-            each including source file, chunk index, and relevance score
-        """
-        formatted = []
-        for doc, score in results:
-            source = doc.metadata.get("source", "unknown")
-            chunk_index = doc.metadata.get("chunk_index", "N/A")
-            text = doc.page_content
-            formatted.append(
-                f"{text}\n[Source: {source}, chunk {chunk_index}, score {score:.2f}]"
-            )
-        return "\n\n".join(formatted)
+    
 
 
-class AzureSearchRetriever:
+class AzureSearchRetriever(BaseRetriever):
     """
     A retriever that uses Azure Cognitive Search for hybrid retrieval.
     
@@ -241,28 +238,4 @@ class AzureSearchRetriever:
         
         return reranked_results
 
-    @traceable
-    def format_citation(self, results: list[tuple[Document, float]]) -> str:
-        """
-        Format retrieved documents with source citations.
-        
-        Creates a human-readable string with document content and metadata
-        for use in LLM context or display to users.
-        
-        Args:
-            results: List of (Document, score) tuples from retrieval
-            
-        Returns:
-            Formatted string with documents separated by double newlines,
-            each including source file, chunk index, and relevance score
-        """
-        formatted = []
-        for doc, score in results:
-            source = doc.metadata.get("source", "unknown")
-            chunk_index = doc.metadata.get("chunk_index", "N/A")
-            text = doc.page_content
-            formatted.append(
-                f"{text}\n[Source: {source}, chunk {chunk_index}, score {score:.2f}]"
-            )
-        return "\n\n".join(formatted)
 
