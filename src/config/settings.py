@@ -36,6 +36,9 @@ class Settings(BaseSettings):
     #Vector Store
     search_backend: str = "faiss" #"faiss" or "azure"
 
+    #Redis
+    redis_url: str = "redis://localhost:6381"
+
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 @lru_cache(maxsize=None)
