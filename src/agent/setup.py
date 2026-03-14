@@ -1,4 +1,5 @@
 from langchain_openai import ChatOpenAI
+from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 
 from src.config import get_settings, Settings
 from src.rag.embeddings import create_embeddings
@@ -64,6 +65,10 @@ async def setup_agent(settings: Settings | None = None):
     engine, session_factory = await init_db()
     await seed_database(session_factory)
 
+    # Initialize PostgreSQL checkpoint saver
+    checkpointer = AsyncPostgresSaver(url=f"postgresql://{settings.postgres_user}:{settings.postgres_password.get_secret_value()}@{settings.postgres_host}:{settings.postgres_port}/{settings.postgres_db}")
+    await checkpointer.setup()
+
     # File status tool for querying document workflow status
     file_status_tool = create_file_status_tool(session_factory)
     tools.append(file_status_tool)
@@ -78,6 +83,6 @@ async def setup_agent(settings: Settings | None = None):
     llm_with_tools = llm.bind_tools(tools)
 
     # Compile the agent graph with all nodes
-    graph = build_graph(llm_with_tools, tools, cache_manager)
+    graph = build_graph(llm_with_tools, tools, cache_manager, checkpointer)
 
-    return graph
+    return graph, session_factory

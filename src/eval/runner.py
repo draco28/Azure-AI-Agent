@@ -172,7 +172,7 @@ async def run_evaluation():
     test_dataset = load_test_dataset()
     # 2. Setup agent (await setup_agent())
     print("Setting up agent...")
-    agent = await setup_agent()
+    agent, _ = await setup_agent()
     # 3. Loop through test cases, call run_single_eval for each
     print("Running evaluation...")
     results = []

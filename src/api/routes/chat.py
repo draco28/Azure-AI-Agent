@@ -8,10 +8,10 @@ router = APIRouter(prefix="/api")
 @router.post("/chat", response_model=ChatResponse)
 async def chat(request: Request, body: ChatRequest):
     graph = request.app.state.graph
-
+    config = {"configurable": {"thread_id": body.session_id}}
     response = await graph.ainvoke({
         "messages": [HumanMessage(content=body.message)]
-    })
+    }, config=config)
 
     agent_response = response["messages"][-1]
 

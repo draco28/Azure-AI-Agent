@@ -12,7 +12,7 @@ from src.config.logging import setup_logging
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     setup_logging("api")
-    graph = await setup_agent()
+    graph, _ = await setup_agent()
     app.state.graph = graph
     yield
 

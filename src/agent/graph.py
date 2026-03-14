@@ -34,7 +34,7 @@ def agent_condition(state: AgentState) -> str:
     return "cache_store"
 
 
-def build_graph(llm_with_tools, tools: list, cache_manager: CacheManager = None) -> StateGraph:
+def build_graph(llm_with_tools, tools: list, cache_manager: CacheManager = None, checkpointer=None) -> StateGraph:
     # Create node functions
     input_guardrail_node = create_input_guardrail_node()
     cache_check_node = create_cache_check_node(cache_manager)
@@ -77,4 +77,4 @@ def build_graph(llm_with_tools, tools: list, cache_manager: CacheManager = None)
     # Cache store → END
     graph.add_edge("cache_store", END)
 
-    return graph.compile()
+    return graph.compile(checkpointer=checkpointer)
